@@ -37,7 +37,7 @@ export const nrollDetails = (quantity: number, min: number, max: number, not = N
     sum = 0;
     rolls = [];
     for (let i = 0; i < quantity; i++) {
-      const val = Math.floor(Math.random() * (max - min + 1)) + min;
+      const val = nrandom(1, min, max, not);
       rolls.push(val);
       sum += val;
     }
