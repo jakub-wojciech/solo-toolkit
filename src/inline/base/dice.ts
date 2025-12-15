@@ -3,8 +3,8 @@ import { capitalize, identity, nrandom, nrollDetails, rollIntervals } from "src/
 import { createMenu, KNOWN_COLORS } from "./shared";
 import { BaseWidget, DomOptions } from "./types";
 
-export const DICE_REGEX = /^`!?(sm|lg|s|l)?(\d+)?d(4|6|8|10|12|20|100|F)([+-]\d+)?([|,]#?[\w\d]+)*(( = |: )[^`]+)?`$/;
-export const DICE_REGEX_G = /`!?(sm|lg|s|l)?(\d+)?d(4|6|8|10|12|20|100|F)([+-]\d+)?([|,]#?[\w\d]+)*(( = |: )[^`]+)?`/g;
+export const DICE_REGEX = /^`!?(sm|lg|s|l)?(\d+)?d(4|6|8|10|12|20|100|F)(\/[ad])?([+-]\d+)?([|,]#?[\w\d]+)*(( = |: )[^`]+)?`$/;
+export const DICE_REGEX_G = /`!?(sm|lg|s|l)?(\d+)?d(4|6|8|10|12|20|100|F)(\/[ad])?([+-]\d+)?([|,]#?[\w\d]+)*(( = |: )[^`]+)?`/g;
 
 const MIN_SIZE = 10;
 const SIZE_DEFAULT = 36;
@@ -25,6 +25,7 @@ export class DiceWidgetBase implements BaseWidget {
   color: string;
   size: number;
   explicit: boolean;
+  advantage: 'a' | 'd' | null;
   rolls: number[] = [];
 
   el: HTMLElement;
@@ -46,6 +47,7 @@ export class DiceWidgetBase implements BaseWidget {
     this.max = 20;
     this.value = 20;
     this.explicit = false;
+    this.advantage = null;
     this.rolls = [];
 
     const normalized = text.replace(/^`+|`+$/g, "");
@@ -58,14 +60,16 @@ export class DiceWidgetBase implements BaseWidget {
     const params: string[] = controlWithParams.split(separator);
     const control: string = params.shift()!;
 
-    const cMatch = control.match(/(!)?(sm|lg|s|l)?(\d+)?d(\d+|F)([+-]\d+)?/);
+    const cMatch = control.match(/(!)?(sm|lg|s|l)?(\d+)?d(\d+|F)(\/[ad])?([+-]\d+)?/);
     const cDisabled = !!cMatch?.[1];
     const cSize = cMatch?.[2] || "";
     const cQuantity = parseInt(cMatch?.[3] || "");
     const cMax = parseInt(cMatch?.[4] || "");
-    const cAdd = parseInt(cMatch?.[5] || "");
+    const cAdvantage = cMatch?.[5] || "";
+    const cAdd = parseInt(cMatch?.[6] || "");
 
     this.disabled = cDisabled;
+    this.advantage = cAdvantage === "/a" ? "a" : cAdvantage === "/d" ? "d" : null;
     this.quantity = cQuantity || 1;
 
     // Legacy size
@@ -89,7 +93,8 @@ export class DiceWidgetBase implements BaseWidget {
       this.rolls = detailMatch[1].split(", ").map((n) => parseInt(n));
       this.value = parseInt(detailMatch[2]);
     } else {
-      this.value = parseInt(valStr) || this.quantity * this.max + this.add;
+      const maxVal = this.advantage ? this.max : this.quantity * this.max;
+      this.value = parseInt(valStr) || maxVal + this.add;
     }
 
     if (cMatch?.[4] === "F") {
@@ -114,7 +119,15 @@ export class DiceWidgetBase implements BaseWidget {
 
   private roll() {
     const { sum, rolls } = nrollDetails(this.quantity, this.min, this.max, this.value);
-    this.value = sum;
+
+    if (this.advantage === "a") {
+      this.value = Math.max(...rolls);
+    } else if (this.advantage === "d") {
+      this.value = Math.min(...rolls);
+    } else {
+      this.value = sum;
+    }
+
     this.rolls = rolls;
 
     if (this.add) this.value += this.add;
@@ -160,7 +173,15 @@ export class DiceWidgetBase implements BaseWidget {
       const details = `${this.rolls.join(", ")} (${this.value})`;
       setTooltip(this.el, details, { delay: 0 });
     } else {
-      const sizeText = [this.quantity > 1 ? this.quantity : "", "d", this.type === "fudge" ? "F" : this.max, this.add ? (this.add > 0 ? `+${this.add}` : this.add) : ""].filter(identity).join("");
+      const sizeText = [
+        this.quantity > 1 ? this.quantity : "",
+        "d",
+        this.type === "fudge" ? "F" : this.max,
+        this.advantage ? `/${this.advantage}` : "",
+        this.add ? (this.add > 0 ? `+${this.add}` : this.add) : "",
+      ]
+        .filter(identity)
+        .join("");
       setTooltip(this.el, sizeText, { delay: 0 });
     }
   }
@@ -177,6 +198,7 @@ export class DiceWidgetBase implements BaseWidget {
       this.quantity > 1 ? this.quantity : "",
       "d",
       this.type === "fudge" ? "F" : this.max,
+      this.advantage ? `/${this.advantage}` : "",
       this.add ? (this.add > 0 ? `+${this.add}` : this.add) : "",
       this.color ? `,${this.color}` : "",
       this.size !== SIZE_DEFAULT ? `,${this.size}` : "",
