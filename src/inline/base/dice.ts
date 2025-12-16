@@ -393,6 +393,8 @@ export class DiceWidgetBase implements BaseWidget {
         setTimeout(reroll, rollIntervals[i] * 0.5);
       } else {
         i = 0;
+        this.disabled = true;
+        this.el.classList.add("srt-dice-disabled");
         onChange?.();
         rollLock = false;
       }
