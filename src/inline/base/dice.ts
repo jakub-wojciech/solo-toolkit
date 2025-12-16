@@ -7,8 +7,8 @@ export const DICE_REGEX = /^`!?(sm|lg|s|l)?(\d+)?d(4|6|8|10|12|20|100|F)(\/[ad])
 export const DICE_REGEX_G = /`!?(sm|lg|s|l)?(\d+)?d(4|6|8|10|12|20|100|F)(\/[ad])?([+-]\d+)?([|,]#?[\w\d]+)*(( = |: )[^`]+)?`/g;
 
 const MIN_SIZE = 10;
-const SIZE_DEFAULT = 36;
-const SIZE_SMALL = 30;
+const SIZE_DEFAULT = 20;
+const SIZE_SMALL = 20;
 const SIZE_LARGE = 52;
 
 let rollLock = false;
