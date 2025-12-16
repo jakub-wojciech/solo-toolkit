@@ -9,6 +9,7 @@ import { SoloToolkitView, VIEW_TYPE } from "./view";
 import { soloToolkitExtension } from "./inline/live";
 import { soloToolkitPostprocessor } from "./inline/read";
 import { backwardCompatibleFixes } from "./utils/backwardfixes";
+import { DICE_REGEX_G, DiceWidgetBase } from "./inline/base/dice";
 
 export default class SoloToolkitPlugin extends Plugin {
   settings: SoloToolkitSettings;
@@ -34,6 +35,41 @@ export default class SoloToolkitPlugin extends Plugin {
       id: "open-toolkit",
       name: "Open toolkit",
       callback: () => this.openView(),
+    });
+
+    this.addCommand({
+      id: "roll-dice-at-cursor",
+      name: "Roll dice at cursor",
+      editorCallback: (editor) => {
+        const cursor = editor.getCursor();
+        const lineText = editor.getLine(cursor.line);
+
+        const matches = [...lineText.matchAll(DICE_REGEX_G)];
+        
+        // Find matches before cursor, reverse them (closest first), take max 10, find first unlocked
+        const targetMatch = matches
+          .filter(
+            (m) => m.index !== undefined && m.index + m[0].length <= cursor.ch
+          )
+          .reverse()
+          .slice(0, 10)
+          .find((m) => !m[0].includes("!"));
+
+        if (targetMatch && targetMatch.index !== undefined) {
+          const originalText = targetMatch[0];
+
+          const dice = new DiceWidgetBase({ originalText });
+          dice.roll();
+          dice.disabled = true;
+          const newText = dice.getText("`");
+
+          editor.replaceRange(
+            newText,
+            { line: cursor.line, ch: targetMatch.index },
+            { line: cursor.line, ch: targetMatch.index + originalText.length }
+          );
+        }
+      },
     });
 
     this.addSettingTab(new SoloToolkitSettingTab(this.app, this));

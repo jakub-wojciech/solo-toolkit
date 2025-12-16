@@ -27,6 +27,7 @@ export class DiceWidgetBase implements BaseWidget {
   explicit: boolean;
   advantage: 'a' | 'd' | null;
   rolls: number[] = [];
+  hasResult: boolean = false;
 
   el: HTMLElement;
   svgEl: SVGElement;
@@ -56,6 +57,7 @@ export class DiceWidgetBase implements BaseWidget {
     const [controlWithParams, value] = normalized.split(
       normalized.includes("=") ? " = " : ": "
     );
+    this.hasResult = value !== undefined;
     const separator = controlWithParams.includes("|") ? "|" : ",";
     const params: string[] = controlWithParams.split(separator);
     const control: string = params.shift()!;
@@ -117,7 +119,7 @@ export class DiceWidgetBase implements BaseWidget {
     }
   }
 
-  private roll() {
+  public roll() {
     const { sum, rolls } = nrollDetails(this.quantity, this.min, this.max, this.value);
 
     if (this.advantage === "a") {
@@ -148,6 +150,8 @@ export class DiceWidgetBase implements BaseWidget {
   }
 
   private updateValue() {
+    if (!this.valueEl) return;
+
     let value = this.value.toString();
 
     if (this.type === "fudge") {

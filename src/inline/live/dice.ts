@@ -8,12 +8,18 @@ export { DICE_REGEX };
 export class DiceWidget extends WidgetType {
   base: DiceWidgetBase;
   node: SyntaxNode;
+  autoRoll: boolean;
 
-  constructor(opts: { originalNode: SyntaxNode; originalText: string }) {
+  constructor(opts: {
+    originalNode: SyntaxNode;
+    originalText: string;
+    autoRoll: boolean;
+  }) {
     super();
 
     this.base = new DiceWidgetBase(opts);
     this.node = opts.originalNode;
+    this.autoRoll = opts.autoRoll;
   }
 
   updateDoc(view: EditorView) {
@@ -35,6 +41,12 @@ export class DiceWidget extends WidgetType {
       },
       onChange: () => this.updateDoc(view),
     });
+
+    if (this.autoRoll && !this.base.hasResult) {
+      this.base.roll();
+      this.base.disabled = true;
+      setTimeout(() => this.updateDoc(view), 0);
+    }
 
     return this.base.el;
   }

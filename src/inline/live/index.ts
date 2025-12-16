@@ -89,6 +89,7 @@ class TrackPlugin implements PluginValue {
                 widget: new DiceWidget({
                   originalNode: node.node,
                   originalText: text,
+                  autoRoll: pluginRef.settings.autoRollDice,
                 }),
               })
             );

@@ -32,6 +32,7 @@ export interface SoloToolkitSettings {
   diceClipboardMode: DiceClipboardMode;
   wordClipboardMode: WordClipboardMode;
   diceDeleteOnCopy: boolean;
+  autoRollDice: boolean;
   inlineCounters: boolean;
   inlineProgressMode: ProgressMode; // obsolete
   inlineDynamicEdit: boolean; // unused
@@ -61,6 +62,7 @@ export const DEFAULT_SETTINGS: SoloToolkitSettings = {
   diceClipboardMode: "inline",
   wordClipboardMode: "plain",
   diceDeleteOnCopy: false,
+  autoRollDice: false,
   inlineCounters: false,
   inlineProgressMode: "clock", // deprecated
   inlineDynamicEdit: true, // deprecated
@@ -302,6 +304,18 @@ export class SoloToolkitSettingTab extends PluginSettingTab {
           .setValue(this.plugin.settings.inlineCounters)
           .onChange(async (value) => {
             this.plugin.settings.inlineCounters = value;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(containerEl)
+      .setName("Auto-roll dice")
+      .setDesc("Automatically roll new dice when created")
+      .addToggle((toggle) =>
+        toggle
+          .setValue(this.plugin.settings.autoRollDice)
+          .onChange(async (value) => {
+            this.plugin.settings.autoRollDice = value;
             await this.plugin.saveSettings();
           })
       );
